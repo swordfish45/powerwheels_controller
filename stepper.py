@@ -1,42 +1,40 @@
-import RPi.GPIO as GPIO
-import time
+from TMC_2209.TMC_2209_StepperDriver import *
 
-# Define GPIO pins for Step and Direction
-STEP_PIN = 23
-DIR_PIN = 22
+class stepper:
+
+    def __init__(self):
+        self.tmc = TMC_2209(21, 16, 20)
+
+        self.tmc.set_direction_reg(False)
+        self.tmc.set_current(750)
+        self.tmc.set_interpolation(True)
+        self.tmc.set_spreadcycle(True)
+        self.tmc.set_microstepping_resolution(2)
+        self.tmc.set_internal_rsense(False)
+
+        self.tmc.set_acceleration(4000)
+        self.tmc.set_max_speed(2000)
+
+        self.tmc.set_motor_enabled(True)
+        self.on = True
 
 
-EN_pin = 24 # enable pin (LOW to enable)
+    def move(self, positive, rposition):
 
-MS1 = 25
-MS2 = 8
+        if(not self.on):
+            self.tmc.set_motor_enabled(True)
+            self.on = True
 
-# Set the GPIO mode and setup the pins
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(STEP_PIN, GPIO.OUT)
-GPIO.setup(DIR_PIN, GPIO.OUT)
-GPIO.setup(EN_pin,GPIO.OUT) # set enable pin as output
+        if(positive):
+            self.tmc.run_to_position_steps(rposition, MovementAbsRel.RELATIVE)
+        else:
+            self.tmc.run_to_position_steps(-rposition, MovementAbsRel.RELATIVE)
+        
 
-GPIO.setup(MS1, GPIO.OUT)
-GPIO.setup(MS2, GPIO.OUT)
+    def off(self):
+        if(self.on):
+            self.tmc.set_motor_enabled(False)
+            self.on = False
 
-# Function to move the stepper motor
-def move_stepper(steps, delay=0.001):
 
-    GPIO.output(MS1, GPIO.LOW)
-    GPIO.output(MS2, GPIO.LOW)
-
-    GPIO.output(EN_pin,GPIO.LOW) # pull enable to low to enable motor
-    GPIO.output(DIR_PIN, GPIO.HIGH)  # Set the direction (HIGH for clockwise, LOW for counterclockwise)
-
-    for _ in range(steps):
-        GPIO.output(STEP_PIN, GPIO.HIGH)
-        time.sleep(delay)
-        GPIO.output(STEP_PIN, GPIO.LOW)
-        time.sleep(delay)
-
-# Move the stepper motor 200 steps (adjust as needed)
-move_stepper(200*8)
-
-# Cleanup GPIO
-GPIO.cleanup()
+            
