@@ -3,7 +3,7 @@
 from evdev import InputDevice, categorize, ecodes
 import stepper
 import threading
-
+import logging
 import time    
 from enum import Enum
 
@@ -21,28 +21,44 @@ deadzone = .1
 message_queue = queue.Queue()
 
 
-    
 class Message(Enum):
     POS = 1
     NEG = 2
     OFF = 3
     LAST = 4
+    CUR_UP = 5
+    CUR_DOWN = 6
 
 
 def worker_function(mqueue):
     last_msg = Message.OFF
-    rpos = 1
+    rpos = 10
+    currents = [250, 500, 750, 1000, 1250, 1500]
+
+    cur_current = 0
+
     while True:
+        epoch_time = int(time.time())
+
 
         try:
-            message = mqueue.get(False)
+
+            messaget = mqueue.get(False)
+            (mtime, message) = messaget
+            if messaget is None:
+                break  # Exit the loop if a None message is received
             print(f"Processing message: {message}")
 
         except queue.Empty:
             message = Message.LAST
+            mtime = epoch_time
 
-        if message is None:
-            break  # Exit the loop if a None message is received
+
+
+
+        if(not(message == Message.OFF) and mtime  < epoch_time): # + float(event.nsec) * 1e-9
+            continue
+
 
         if(message == Message.POS):
             stepper.move(True, rpos)
@@ -56,7 +72,14 @@ def worker_function(mqueue):
         elif(message == Message.OFF):
             last_msg = Message.OFF
             stepper.off()
-
+        elif(message == Message.CUR_UP):
+            if(cur_current < len(currents)-1):
+                cur_current = cur_current + 1
+                stepper.set_current(currents[cur_current])
+        elif(message == Message.CUR_DOWN):
+            if(cur_current > 0):
+                cur_current = cur_current - 1
+                stepper.set_current(currents[cur_current])
 
 worker_thread = threading.Thread(target=worker_function, args=(message_queue,))
 worker_thread.start()
@@ -66,19 +89,28 @@ for event in gamepad.read_loop():
 
     if(event.sec  < epoch_time): # + float(event.nsec) * 1e-9
         continue
+    # print("event.type " , event.type , "event.code", event.code ,"event.value", event.value)
 
     if event.type == 3:
+        if event.code == 17:
+            if event.value == -1: #raise current
+                message_queue.put((event.sec, Message.CUR_UP))
+            if event.value == 1: #lower current
+                message_queue.put((event.sec, Message.CUR_DOWN))
+
+
+
         if event.code == 0:
             if(abs(event.value / encodermax - .5) >  deadzone):
                 print("X ",  event.value / encodermax, event.sec )
 
                 if event.value / encodermax > .5:
-                    message_queue.put(Message.POS)
+                    message_queue.put((event.sec, Message.POS))
                 else:
-                    message_queue.put(Message.NEG)
+                    message_queue.put((event.sec, Message.NEG))
 
             else:    
-                message_queue.put(Message.OFF)
+                message_queue.put((event.sec, Message.OFF))
 
 
 

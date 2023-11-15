@@ -6,17 +6,22 @@ class stepper:
         self.tmc = TMC_2209(21, 16, 20)
 
         self.tmc.set_direction_reg(False)
-        self.tmc.set_current(750)
+        self.tmc.set_current(250)
         self.tmc.set_interpolation(True)
         self.tmc.set_spreadcycle(True)
         self.tmc.set_microstepping_resolution(2)
         self.tmc.set_internal_rsense(False)
 
-        self.tmc.set_acceleration(4000)
-        self.tmc.set_max_speed(2000)
+        self.tmc.set_acceleration(40000)
+        self.tmc.set_max_speed(40000)
 
         self.tmc.set_motor_enabled(True)
         self.on = True
+
+
+    def set_current(self, current):
+        self.tmc.set_current(current)
+
 
 
     def move(self, positive, rposition):
