@@ -1,0 +1,16 @@
+[Unit]
+Description=Powerwheels Controller
+After=network.target
+
+[Service]
+ExecStart=/home/pi/powerwheels_controller/.venv/bin/python /home/pi/powerwheels_controller/controller.py
+WorkingDirectory=/home/pi/powerwheels_controller/
+Environment="PATH=/home/pi/powerwheels_controller/.venv/bin:$PATH"
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=controller
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

@@ -9,6 +9,7 @@ pair [id]
 
 my controller id is  98:7A:14:62:4D:27
 
+
 # Test controller
 python3 .venv/lib/python3.9/site-packages/evdev/evtest.py
 
