@@ -33,7 +33,7 @@ class Message(Enum):
 def worker_function(mqueue):
     last_msg = Message.OFF
     rpos = 10
-    currents = [250, 500, 750, 1000, 1250, 1500]
+    currents = [250, 500, 750, 1000, 1250, 1500, 1750, 2000]
 
     cur_current = 0
 
